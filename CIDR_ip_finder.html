@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>CIDR IP Finder</title>
+        <script type="text/javascript" src="jquery-3.3.1.slim.min.js"></script>
+        <script type="text/javascript" src="lodash.js"></script>       
+        <script type="text/javascript" src="CIDR_ip_finder.js"></script>
+        <link rel="stylesheet" type="css/text" href="all.min.css"/>
+        <link rel="stylesheet" type="css/text" href="bulma.min.css"/>
+        <link rel="stylesheet" type="css/text" href="CIDR_ip_finder.css"/>
+    </head>
+    <body>
+        <h1>IP's to CIDR's</h1>
+        <div>Input IP's and CIDR's:</div>
+        <textarea id="inputCIDRs" cols="40" rows="7"></textarea>
+        <button id="btnUpload">Upload</button>
+        <div></div>
+        <div>Strictness: No Holes<input id="sliderHoles" class="slider is-fullwidth" step="1" min="0" max="100" value="50" type="range">Minimum Rules</div>
+        <div>Output CIDR's:</div>
+        <textarea id="outputCIDRs" cols="40" rows="7"></textarea>
+        <button id="btnCopyToClipboard">Copy to Clipboard</button>
+        <div></div>
+        <div id="holes">Holes: N/A</div>
+    </body>
+</html>

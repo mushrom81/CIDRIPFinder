@@ -1,14 +1,31 @@
 
 $(function(){
-    $("#btnUpload").click(function(){
-        var ip_array = get_cidr_rules_from_file();
-        $("#outputCIDRs").val(ip_array.join("\n"));
-    });
+    
     $("#btnCopyToClipboard").click(function(){
         $("#outputCIDRs").select();
         document.execCommand('copy');
-    })
+    });
     
+    $("#inputCIDRs").blur(function(){
+        var ip_array = get_cidr_rules_from_file();
+        $("#outputCIDRs").val(ip_array.join("\n"));
+        $("#holes").val(holes.toString());
+    });
+    
+    setInterval(function(){
+        if ($("#inputCIDRs").is(':focus')) {}
+        else {
+            var ip_array = get_cidr_rules_from_file();
+            $("#outputCIDRs").val(ip_array.join("\n"));
+            $("#holes").val(holes.toString());
+        }
+    }, 1000);
+    
+    var errorDiv = $("#errorDiv");
+    var outputHoles = $("#holes");
+    var outputTextarea = $("#outputCIDRs");
+    var holes = 0;
+
     class Ip {
         constructor(ip) {
             this._ip = ip;
@@ -78,10 +95,12 @@ $(function(){
     }
 
     function get_cidr_rules_from_file() {
-        var max_holes_per_bucket = 0;
-        var contents = $("#inputCIDRs").val()
+        holes = 0;
+        var max_holes_per_bucket = $("#sliderHoles").val();
+        var contents = $("#inputCIDRs").val()    
         var ip_strings = contents.split("\n");
-        // var max_holes_per_bucket = f(slider)
+        ip_strings = ip_strings.join(",");
+        ip_strings = ip_strings.split(",");
         var output = get_cidr_rules_from_ip_strings(ip_strings, max_holes_per_bucket);
         return output;
     }
@@ -129,6 +148,20 @@ $(function(){
         
         var cidr_rules = [];
         _.each(complete_hash, (ip_instances, ip_mask) => cidr_rules.push("" + ip_mask + "/" + ip_instances[0].bucket_n));
+        if (_.some(cidr_rules, errorCase => 
+            errorCase == "0.0.0.0/32"
+        )) {
+            holes = "N/A";
+            cidr_rules = [];
+            outputHoles.prop('disabled', true);
+            outputTextarea.prop('disabled', true);
+            errorDiv.show();
+        }
+        else {
+            outputHoles.prop('disabled', false);
+            outputTextarea.prop('disabled', false);
+            errorDiv.hide();
+        }
         return cidr_rules;
     }
 
@@ -141,9 +174,14 @@ $(function(){
             ip_mask_hash = {}
             _.each(ip_instances, function(ip_instance) {
                 if (ip_mask_hash[ip_instance.ip_mask] === undefined) ip_mask_hash[ip_instance.ip_mask] = [];
-                ip_mask_hash[ip_instance.ip_mask] << ip_instance;
+                ip_mask_hash[ip_instance.ip_mask].push(ip_instance);
             })
-            if (_.keys(ip_mask_hash).length == 1) break 
+            if (_.keys(ip_mask_hash).length == 1) {
+                var ips_in_bucket = _.values(ip_mask_hash)[0].length;
+                var bucket_size = _.values(ip_mask_hash)[0][0].bucket_capacity;
+                holes += (bucket_size - ips_in_bucket);
+                break
+            } 
             _.each(ip_instances, function(ip_instance) {
                     // Updates @ip_mask                
                 ip_instance.bucket_n -= 1;
@@ -151,5 +189,4 @@ $(function(){
         }
         return ip_instances[0].bucket_n;
     }
-
 })

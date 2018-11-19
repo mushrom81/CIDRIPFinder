@@ -236,9 +236,10 @@ $(function(){
         var spliced_cidr_rule_instances;
         for (var i=0; i < cidr_rule_instances.length; i++) {
             spliced_cidr_rule_instances = cidr_rule_instances.slice();
-            remove_subsets(cidr_rule_instances[i], spliced_cidr_rule_instances.splice(i, 1));
-            return _.map(cidr_rule_instances, instance => instance.cidr_rule)
+            spliced_cidr_rule_instances.splice(i, 1);
+            remove_subsets(cidr_rule_instances[i], spliced_cidr_rule_instances);
         }
+        return _.map(cidr_rule_instances, instance => instance.cidr_rule)
     }
 
     function remove_subsets(ip_instance, ip_instance_array) {

@@ -98,16 +98,22 @@ $(function(){
         constructor(cidr_rule) {
             this._cidr_rule = cidr_rule
             this._bucket_n = cidr_rule.split("/")[1];
+            this._n = cidr_rule.split("/")[1];
             this._ip = cidr_rule.split("/")[0];
+            this.update_ip_mask();
+        }
+
+        get n() {
+            return this._n
+        }
+        
+        set n(value) {
+            this._bucket_n = value;
             this.update_ip_mask();
         }
         
         get cidr_rule() {
             return this._cidr_rule
-        }
-
-        get n() {
-            return this._bucket_n
         }
 
         get ip_mask() {
@@ -254,11 +260,17 @@ $(function(){
     }
 
     function check_if_subset(ip_instance, other_ip_instance) {
+        if (ip_instance.n < other_ip_instance.n) {
+            other_ip_instance.n = ip_instance.n;
+        }
+        else {
+            ip_instance.n = other_ip_instance.n;
+        }
         var combined_array = [];
         for (var i=0; i < 4; i++) {
-            combined_array.push(ip_instance.ip_mask[i] & other_ip_instance.ip_mask[i]);
+            combined_array.push(ip_instance.ip_mask[i] ^ other_ip_instance.ip_mask[i]);
         }
-        if (_.isEqual(combined_array, ip_instance.ip_mask) || _.isEqual(combined_array, other_ip_instance.ip_mask)) { return true; }
+        if (_.isEqual(combined_array, [0, 0, 0, 0]) || _.isEqual(combined_array, [0, 0, 0, 0])) { return true; }
         else { return false; }
     }
 

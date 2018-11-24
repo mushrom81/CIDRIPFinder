@@ -97,8 +97,8 @@ $(function(){
     class CIDRRule {
         constructor(cidr_rule) {
             this._cidr_rule = cidr_rule
-            this._bucket_n = cidr_rule.split("/")[1];
-            this._n = cidr_rule.split("/")[1];
+            this._bucket_n = parseInt(cidr_rule.split("/")[1]);
+            this._n = parseInt(cidr_rule.split("/")[1]);
             this._ip = cidr_rule.split("/")[0];
             this.update_ip_mask();
         }
@@ -260,17 +260,21 @@ $(function(){
     }
 
     function check_if_subset(ip_instance, other_ip_instance) {
+        ip_instance.n = ip_instance.n;
+        other_ip_instance.n = other_ip_instance.n;
         if (ip_instance.n < other_ip_instance.n) {
+                        // updates ip_mask
             other_ip_instance.n = ip_instance.n;
         }
         else {
+                // updates ip_mask
             ip_instance.n = other_ip_instance.n;
         }
         var combined_array = [];
         for (var i=0; i < 4; i++) {
             combined_array.push(ip_instance.ip_mask[i] ^ other_ip_instance.ip_mask[i]);
         }
-        if (_.isEqual(combined_array, [0, 0, 0, 0]) || _.isEqual(combined_array, [0, 0, 0, 0])) { return true; }
+        if (_.isEqual(combined_array, [0, 0, 0, 0])) { return true; }
         else { return false; }
     }
 

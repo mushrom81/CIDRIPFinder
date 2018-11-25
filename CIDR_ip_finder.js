@@ -96,15 +96,29 @@ $(function(){
 
     class CIDRRule {
         constructor(cidr_rule) {
-            this._cidr_rule = cidr_rule
             this._bucket_n = parseInt(cidr_rule.split("/")[1]);
             this._n = parseInt(cidr_rule.split("/")[1]);
+            this._static_n = parseInt(cidr_rule.split("/")[1]);
             this._ip = cidr_rule.split("/")[0];
             this.update_ip_mask();
+            this._ip = this._ip_mask.join(".")
+            this._cidr_rule = [this._ip, this._bucket_n].join("/")
+        }
+
+        get ip() {
+            return this._ip;
+        }
+
+        get static_n() {
+            return this._static_n;
         }
 
         get n() {
-            return this._n
+            return this._n;
+        }
+
+        set root_n(value) {
+            this._n = value;
         }
         
         set n(value) {
@@ -221,6 +235,7 @@ $(function(){
         
         var cidr_rules = input_cidr_rules.slice();
         _.each(complete_hash, (ip_instances, ip_mask) => cidr_rules.push("" + ip_mask + "/" + ip_instances[0].bucket_n));
+        cidr_rules = _.uniq(cidr_rules);
         cidr_rules = remove_duplicates(cidr_rules);
         if (_.some(cidr_rules, errorCase => errorCase == "0.0.0.0/32")) {
             holes = "N/A";
@@ -236,16 +251,32 @@ $(function(){
         }
         return cidr_rules;
     }
-        var cidr_rule_instances;
+    var removeable_cidr_rule_instances;
+    var merged_cidr_rules;
+
     function remove_duplicates(cidr_rules) {
-        cidr_rule_instances = _.map(cidr_rules, cidr_rule => new CIDRRule(cidr_rule));
+        var cidr_rule_instances = _.map(cidr_rules, cidr_rule => new CIDRRule(cidr_rule));
+        removeable_cidr_rule_instances = [];
+        merged_cidr_rules = [];
         var spliced_cidr_rule_instances;
         for (var i=0; i < cidr_rule_instances.length; i++) {
             spliced_cidr_rule_instances = cidr_rule_instances.slice();
             spliced_cidr_rule_instances.splice(i, 1);
             remove_subsets(cidr_rule_instances[i], spliced_cidr_rule_instances);
         }
-        return _.map(cidr_rule_instances, instance => instance.cidr_rule)
+        merged_cidr_rules = _.map(merged_cidr_rules, instance => instance.cidr_rule);
+        cidr_rule_instances =  _.map(cidr_rule_instances, instance => instance.cidr_rule);
+        removeable_cidr_rule_instances = _.map(removeable_cidr_rule_instances, instance => instance.cidr_rule);
+        removeable_cidr_rule_instances = _.uniq(removeable_cidr_rule_instances);
+        _.each(removeable_cidr_rule_instances, function(removeable_instance) {
+            cidr_rule_instances.splice(cidr_rule_instances.indexOf(removeable_instance), 1);
+        });
+        cidr_rule_instances = cidr_rule_instances.concat(merged_cidr_rules);
+
+        if (!_.isEqual(merged_cidr_rules, []) || !_.isEqual(removeable_cidr_rule_instances, [])) {
+            cidr_rule_instances = remove_duplicates(cidr_rule_instances);
+        }
+        return cidr_rule_instances
     }
 
     function remove_subsets(ip_instance, ip_instance_array) {
@@ -253,27 +284,36 @@ $(function(){
         _.each(ip_instance_array, function(other_ip_instance){
             if (check_if_subset(ip_instance, other_ip_instance)) {
                 if (ip_instance.n <= other_ip_instance.n) {
-                    cidr_rule_instances.splice(cidr_rule_instances.indexOf(other_ip_instance), 1);                    
+                    removeable_cidr_rule_instances.push(other_ip_instance);                    
+                }
+            }
+            else {
+                ip_instance.root_n = ip_instance.static_n - 1;
+                other_ip_instance.root_n =ip_instance.static_n - 1;
+                if (check_if_subset(ip_instance, other_ip_instance)) {
+                    merged_cidr_rules.push(new CIDRRule([ip_instance.ip, ip_instance.static_n - 1].join("/")));
                 }
             }
         });
     }
 
     function check_if_subset(ip_instance, other_ip_instance) {
-        ip_instance.n = ip_instance.n;
-        other_ip_instance.n = other_ip_instance.n;
         if (ip_instance.n < other_ip_instance.n) {
                         // updates ip_mask
             other_ip_instance.n = ip_instance.n;
+            ip_instance.n = ip_instance.n;
         }
         else {
                 // updates ip_mask
             ip_instance.n = other_ip_instance.n;
+            other_ip_instance.n = other_ip_instance.n;
         }
         var combined_array = [];
         for (var i=0; i < 4; i++) {
             combined_array.push(ip_instance.ip_mask[i] ^ other_ip_instance.ip_mask[i]);
         }
+        ip_instance.root_n = ip_instance.static_n;
+        other_ip_instance.root_n = other_ip_instance.static_n;
         if (_.isEqual(combined_array, [0, 0, 0, 0])) { return true; }
         else { return false; }
     }

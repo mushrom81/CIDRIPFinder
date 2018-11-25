@@ -13,16 +13,16 @@
         </style>
     </head>
     <body>
-        <h1>IP's to CIDR's</h1>
+        <h1>IPs to CIDR rules</h1>
         <div>Input IP's and CIDR's:</div>
         <textarea id="inputCIDRs" cols="40" rows="7"></textarea>
         <div></div>
-        <div>Strictness: No Holes<input id="sliderHoles" class="slider is-fullwidth" step="1" min="0" max="100" value="0" type="range">Less Rules</div>
+        <div>Allow up to <span id="maxAllowedHoleCount"></span> holes per rule <input id="sliderHoles" class="slider is-fullwidth" step="1" min="0" max="1024" value="0" type="range"></div>
         <div>Output CIDR's:</div>
         <div id="errorDiv">Invalid Input</div>
         <textarea id="outputCIDRs" cols="40" rows="7"></textarea>
         <button id="btnCopyToClipboard">Copy to clipboard</button>
         <div></div>
-        Holes:<textarea id="holes" cols="10" rows="1">N/A</textarea>
+        Holes:<span id="holes">N/A</span>
     </body>
 </html>

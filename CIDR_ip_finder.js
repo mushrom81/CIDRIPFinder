@@ -189,7 +189,7 @@ $(function() {
 
     function get_cidr_rules_from_ip_strings(ip_strings, max_holes_per_bucket, input_cidr_rules) {
         var uniqeIPs = _.uniq(ip_strings);
-        // remove "" from uniqIPs
+        uniqeIPs.splice(uniqeIPs.indexOf(""), 1);
         if (_.isEqual(uniqeIPs, [])) uniqeIPs = ["0.0.0.0"];
         var ips = _.map(uniqeIPs, function(ip_string) { return new Ip(ip_string) });
         var ip_mask_hash = {};

@@ -3,21 +3,20 @@ $(function() {
     var errorDiv = $("#errorDiv");
     var outputHoles = $("#holes");
     var outputTextarea = $("#outputCIDRs");
-    var sliderHoles = $("#sliderHoles")
+    var manualCalculate = $("#manualCalculate");
     
     setTimeout(function() {
         if (!$("#inputCIDRs").is(':focus')) update_outputs();
     }, 1);
 
     $("#inputCIDRs").blur(update_outputs);
-
-    sliderHoles.on("change", update_outputs);
+    manualCalculate.on("click", update_outputs);
+    $("#maxAllowedHoleCount").blur(update_outputs);
 
     function update_outputs() {
         var ip_array = get_cidr_rules_from_file();
         $("#outputCIDRs").val(ip_array.join("\n"));
         $("#holes").html(holes.toString());
-        $("#maxAllowedHoleCount").html($("#sliderHoles").val());
     }
 
     $("#btnCopyToClipboard").click(function() {
@@ -171,25 +170,30 @@ $(function() {
 
     function get_cidr_rules_from_file() {
         holes = 0;
-        var max_holes_per_bucket = $("#sliderHoles").val();
-        var contents = $("#inputCIDRs").val()    
+        var max_holes_per_bucket = parseInt($("#maxAllowedHoleCount").val());
+        if (_.isNaN(max_holes_per_bucket)) {
+            max_holes_per_bucket = 0;
+        }
+        var contents = $("#inputCIDRs").val();
         if (_.isEqual(contents, [])) { contents = "0.0.0.0"; }
-        var ip_strings = contents.split("\n").join(",").split(",");
+        var lines = contents.split("\n").join(",").split(",");
+        lines = _.filter(lines, line => line != "");
         var input_cidr_rules = [];
-        _.each(ip_strings, function(ip_string) {
-            if (ip_string.indexOf("/") > -1) {
-                input_cidr_rules.push(ip_string);
+        _.each(lines, function(line) {
+            if (line.indexOf("/") > -1) {
+                input_cidr_rules.push(line);
             }
         });
+
         _.each(input_cidr_rules, function(cidr_rule){
-            ip_strings.splice(ip_strings.indexOf(cidr_rule), 1);
+            lines.splice(lines.indexOf(cidr_rule), 1);
         });
-        return get_cidr_rules_from_ip_strings(ip_strings, max_holes_per_bucket, input_cidr_rules);
+
+        return get_cidr_rules_from_ip_strings(lines, max_holes_per_bucket, input_cidr_rules);
     }
 
     function get_cidr_rules_from_ip_strings(ip_strings, max_holes_per_bucket, input_cidr_rules) {
         var uniqeIPs = _.uniq(ip_strings);
-        uniqeIPs.splice(uniqeIPs.indexOf(""), 1);
         if (_.isEqual(uniqeIPs, [])) uniqeIPs = ["0.0.0.0"];
         var ips = _.map(uniqeIPs, function(ip_string) { return new Ip(ip_string) });
         var ip_mask_hash = {};
@@ -234,7 +238,7 @@ $(function() {
         _.each(complete_hash, (ip_instances, ip_mask) => cidr_rules.push("" + ip_mask + "/" + ip_instances[0].bucket_n));
         cidr_rules = _.uniq(cidr_rules);
         cidr_rules = remove_duplicates(cidr_rules);
-        if (_.some(cidr_rules, errorCase => errorCase == "0.0.0.0/32")) {
+        if (_.some(cidr_rules, errorCase => errorCase == "0.0.0.0/32") && $("#inputCIDRs").val() != "") {
             holes = "N/A";
             cidr_rules = [];
             outputHoles.prop('disabled', true);
@@ -246,6 +250,10 @@ $(function() {
             outputTextarea.prop('disabled', false);
             errorDiv.hide();
         }
+        if (_.some(cidr_rules, errorCase => errorCase == "0.0.0.0/32")) {
+            cidr_rules.splice(cidr_rules.indexOf("0.0.0.0/32"), 1);
+        }
+
         return cidr_rules;
     }
 

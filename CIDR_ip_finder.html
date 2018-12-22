@@ -10,16 +10,19 @@
                 color: red;
                 display: none;
             }
+            #manualCalculate {
+                color: blue;
+            }
         </style>
     </head>
     <body>
         <h1>IPs to CIDR rules</h1>
-        <div>Input IP's and CIDR's:</div>
+        <div>Input IPs and CIDRs:</div>
         <textarea id="inputCIDRs" cols="40" rows="7"></textarea>
-        <div></div>
-        <div>Allow up to <span id="maxAllowedHoleCount"></span> holes per rule <input id="sliderHoles" class="slider is-fullwidth" step="1" min="0" max="1024" value="0" type="range"></div>
-        <div>Output CIDR's:</div>
-        <div id="errorDiv">Invalid Input</div>
+        <div>If rules are not calculated immediately, click <span id="manualCalculate">here</span></div>
+        <div>Allow up to <textarea id="maxAllowedHoleCount" cols="5" rows="1">0</textarea> holes per rule
+        <div>Output CIDRs:</div>
+        <div id="errorDiv">Invalid Input (Check for empty lines)</div>
         <textarea id="outputCIDRs" cols="40" rows="7"></textarea>
         <button id="btnCopyToClipboard">Copy to clipboard</button>
         <div></div>
